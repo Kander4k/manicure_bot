@@ -1,0 +1,25 @@
+# Секреты — не попадут в GitHub
+.env
+
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+
+# База данных (локальная копия)
+*.db
+
+# IDE и ОС
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

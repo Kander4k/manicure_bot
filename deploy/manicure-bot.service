@@ -1,0 +1,30 @@
+# Пример systemd-сервиса для VPS (Linux).
+# Установка:
+#   1. Скопируйте файл: sudo cp manicure-bot.service /etc/systemd/system/
+#   2. Отредактируйте пути и пользователя:
+#      - ExecStart: путь к python и к папке проекта
+#      - User=ваш_пользователь
+#   3. Положите .env в папку проекта на сервере.
+#   4. Включите и запустите:
+#      sudo systemctl daemon-reload
+#      sudo systemctl enable manicure-bot
+#      sudo systemctl start manicure-bot
+#      sudo systemctl status manicure-bot
+#
+# Просмотр логов: journalctl -u manicure-bot -f
+
+[Unit]
+Description=Manicure Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USER
+WorkingDirectory=/home/YOUR_USER/manicure_bot
+ExecStart=/home/YOUR_USER/manicure_bot/venv/bin/python bot.py
+Restart=always
+RestartSec=10
+Environment=PATH=/home/YOUR_USER/manicure_bot/venv/bin
+
+[Install]
+WantedBy=multi-user.target
