@@ -39,8 +39,12 @@ async def _check_subscription(
     """
     Проверяет подписку в Telegram и сохраняет флаг в БД.
     """
+    if not config.SUBSCRIBE_CHANNEL_ID:
+        # Если канал подписки не задан, подписку не требуем
+        await db.set_user_subscription(user_id, True)
+        return True
     try:
-        member = await bot.get_chat_member(config.CHANNEL_ID, user_id)
+        member = await bot.get_chat_member(config.SUBSCRIBE_CHANNEL_ID, user_id)
         status = member.status
         is_subscribed = status in ("member", "administrator", "creator")
     except Exception:
@@ -136,10 +140,19 @@ async def menu_book_callback(
             "⚠️ Для записи нужно подписаться на канал.\n\n"
             "После подписки нажмите <b>«Проверить подписку»</b> 👇"
         )
+        if not config.SUBSCRIBE_CHANNEL_LINK:
+            # Канал подписки есть, но ссылка не задана — дадим пользователю понятное сообщение
+            text = (
+                "⚠️ Для записи нужно быть подписанным на канал.\n\n"
+                "Ссылка на канал не настроена. Напишите администратору."
+            )
+            await callback.message.answer(text=text, parse_mode="HTML")
+            await callback.answer()
+            return
         await callback.message.answer(
             text=text,
             parse_mode="HTML",
-            reply_markup=subscription_kb(config.CHANNEL_LINK),
+            reply_markup=subscription_kb(config.SUBSCRIBE_CHANNEL_LINK),
         )
         await callback.answer()
         return
@@ -434,14 +447,15 @@ async def confirm_booking_callback(
         f"🕐 {date_obj.strftime('%d.%m.%Y')} в {time_str}\n"
         f"👤 {name} · 📱 {phone}"
     )
-    try:
-        await bot.send_message(
-            chat_id=config.CHANNEL_ID,
-            text=channel_text,
-            parse_mode="HTML",
-        )
-    except Exception:
-        pass
+    if config.LOG_CHANNEL_ID:
+        try:
+            await bot.send_message(
+                chat_id=config.LOG_CHANNEL_ID,
+                text=channel_text,
+                parse_mode="HTML",
+            )
+        except Exception:
+            pass
 
     # Планируем напоминание
     await scheduler.schedule_reminder(
@@ -502,6 +516,8 @@ async def cancel_own_booking_callback(
     callback: CallbackQuery,
     db: Database,
     scheduler: ReminderScheduler,
+    config: Config,
+    bot: Bot,
 ) -> None:
     user_id = callback.from_user.id
     result = await db.cancel_booking(user_id)
@@ -522,4 +538,23 @@ async def cancel_own_booking_callback(
         f"📅 {date_obj.strftime('%d.%m.%Y')} в {time_str}"
     )
     await callback.message.answer(text=text, parse_mode="HTML")
+
+    # Уведомляем администратора об отмене записи
+    admin_text = (
+        "❌ <b>Клиент отменил запись</b>\n\n"
+        f"👤 Пользователь: @{callback.from_user.username or 'без username'} "
+        f"(ID: <code>{user_id}</code>)\n"
+        f"📅 {date_obj.strftime('%d.%m.%Y')} в {time_str}\n"
+        f"ID записи: <code>{booking_id}</code>"
+    )
+    try:
+        await bot.send_message(
+            chat_id=config.ADMIN_ID,
+            text=admin_text,
+            parse_mode="HTML",
+        )
+    except Exception:
+        # Если не удалось уведомить админа, просто продолжаем
+        pass
+
     await callback.answer()

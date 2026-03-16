@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -13,9 +14,14 @@ load_dotenv(PROJECT_ROOT / ".env")
 class Config:
     BOT_TOKEN: str
     ADMIN_ID: int
-    CHANNEL_ID: int
-    CHANNEL_LINK: str
+    # Канал для ПОДПИСКИ (опционально): если не задан — подписка не требуется
+    SUBSCRIBE_CHANNEL_ID: Optional[int] = None
+    SUBSCRIBE_CHANNEL_LINK: str = ""
+
+    # Канал-ЖУРНАЛ (опционально): если не задан — записи не дублируются в канал
+    LOG_CHANNEL_ID: Optional[int] = None
     DATABASE_PATH: str = "database.db"
+    CLIENT_NAME: str = "Manicure Master"
 
 
 def load_config() -> Config:
@@ -31,20 +37,38 @@ def load_config() -> Config:
     if not admin_id:
         raise RuntimeError("Не указан ADMIN_ID в .env")
 
-    channel_id = int(os.getenv("CHANNEL_ID", "0"))
-    if not channel_id:
-        raise RuntimeError("Не указан CHANNEL_ID в .env")
+    # --- Новые переменные (рекомендуемый способ) ---
+    raw_subscribe_channel_id = os.getenv("SUBSCRIBE_CHANNEL_ID", "").strip()
+    subscribe_channel_id: Optional[int] = (
+        int(raw_subscribe_channel_id) if raw_subscribe_channel_id else None
+    )
+    subscribe_channel_link = os.getenv("SUBSCRIBE_CHANNEL_LINK", "").strip()
 
-    channel_link = os.getenv("CHANNEL_LINK", "")
-    if not channel_link:
-        raise RuntimeError("Не указан CHANNEL_LINK в .env")
+    raw_log_channel_id = os.getenv("LOG_CHANNEL_ID", "").strip()
+    log_channel_id: Optional[int] = int(raw_log_channel_id) if raw_log_channel_id else None
+
+    # --- Обратная совместимость со старым именованием ---
+    # Раньше был один канал: CHANNEL_ID/CHANNEL_LINK (и для подписки, и для логов).
+    raw_channel_id = os.getenv("CHANNEL_ID", "").strip()
+    legacy_channel_id: Optional[int] = int(raw_channel_id) if raw_channel_id else None
+    legacy_channel_link = os.getenv("CHANNEL_LINK", "").strip()
+
+    if subscribe_channel_id is None:
+        subscribe_channel_id = legacy_channel_id
+    if not subscribe_channel_link:
+        subscribe_channel_link = legacy_channel_link
+    if log_channel_id is None:
+        log_channel_id = legacy_channel_id
 
     db_path = os.getenv("DATABASE_PATH", str(PROJECT_ROOT / "database.db"))
+    client_name = os.getenv("CLIENT_NAME", "Manicure Master")
 
     return Config(
         BOT_TOKEN=token,
         ADMIN_ID=admin_id,
-        CHANNEL_ID=channel_id,
-        CHANNEL_LINK=channel_link,
+        SUBSCRIBE_CHANNEL_ID=subscribe_channel_id,
+        SUBSCRIBE_CHANNEL_LINK=subscribe_channel_link,
+        LOG_CHANNEL_ID=log_channel_id,
         DATABASE_PATH=db_path,
+        CLIENT_NAME=client_name,
     )
