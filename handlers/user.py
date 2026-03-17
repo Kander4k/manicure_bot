@@ -8,6 +8,7 @@ from aiogram.types import (
     Message,
     CallbackQuery,
 )
+from aiogram.exceptions import TelegramBadRequest
 
 from config import Config
 from database.db import Database
@@ -88,32 +89,30 @@ async def cmd_start(
 
 
 @user_router.callback_query(F.data == "menu_prices")
-async def prices_callback(callback: CallbackQuery) -> None:
+async def prices_callback(callback: CallbackQuery, config: Config) -> None:
     """
     Прайсы — без FSM.
     """
-    text = (
-        "💰 <b>Прайс-лист</b>\n\n"
-        "💅 Френч — <b>1000₽</b>\n"
-        "💅 Квадрат — <b>500₽</b>\n"
-    )
-    await callback.message.edit_text(
-        text=text,
-        parse_mode="HTML",
-        reply_markup=callback.message.reply_markup,
-    )
+    text = config.PRICES_TEXT
+    try:
+        await callback.message.edit_text(
+            text=text,
+            parse_mode="HTML",
+            reply_markup=callback.message.reply_markup,
+        )
+    except TelegramBadRequest as e:
+        if "message is not modified" not in str(e):
+            raise
     await callback.answer()
 
 
 @user_router.callback_query(F.data == "menu_portfolio")
-async def portfolio_callback(callback: CallbackQuery) -> None:
+async def portfolio_callback(callback: CallbackQuery, config: Config) -> None:
     """
     Портфолио — без FSM, просто ссылка.
     """
     text = "🖼 <b>Портфолио работ</b>\n\nНажмите кнопку ниже 👇"
-    kb = portfolio_kb(
-        "https://ru.pinterest.com/crystalwithluv/_created/"
-    )
+    kb = portfolio_kb(config.PORTFOLIO_URL)
     await callback.message.answer(
         text=text,
         parse_mode="HTML",

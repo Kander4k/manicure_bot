@@ -22,6 +22,8 @@ class Config:
     LOG_CHANNEL_ID: Optional[int] = None
     DATABASE_PATH: str = "database.db"
     CLIENT_NAME: str = "Manicure Master"
+    PRICES_TEXT: str = ""
+    PORTFOLIO_URL: str = ""
 
 
 def load_config() -> Config:
@@ -62,6 +64,16 @@ def load_config() -> Config:
 
     db_path = os.getenv("DATABASE_PATH", str(PROJECT_ROOT / "database.db"))
     client_name = os.getenv("CLIENT_NAME", "Manicure Master")
+    prices_text = os.getenv(
+        "PRICES_TEXT",
+        "💰 <b>Прайс-лист</b>\n\n"
+        "💅 Услуга 1 — <b>1000₽</b>\n"
+        "💅 Услуга 2 — <b>1500₽</b>\n",
+    )
+    portfolio_url = os.getenv(
+        "PORTFOLIO_URL",
+        "https://ru.pinterest.com/crystalwithluv/_created/",
+    )
 
     return Config(
         BOT_TOKEN=token,
@@ -71,4 +83,6 @@ def load_config() -> Config:
         LOG_CHANNEL_ID=log_channel_id,
         DATABASE_PATH=db_path,
         CLIENT_NAME=client_name,
+        PRICES_TEXT=prices_text,
+        PORTFOLIO_URL=portfolio_url,
     )

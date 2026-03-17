@@ -52,7 +52,10 @@ async def main():
     dp.include_router(user_router)
     dp.include_router(admin_router)
 
-    print("Бот запущен...")
+    print(
+        f"Бот запущен для клиента: {config.CLIENT_NAME} "
+        f"(admin_id={config.ADMIN_ID}, db={config.DATABASE_PATH})"
+    )
 
     await dp.start_polling(bot)
 
