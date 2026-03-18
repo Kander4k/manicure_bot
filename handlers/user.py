@@ -69,13 +69,13 @@ async def cmd_start(
     is_admin = message.from_user.id == config.ADMIN_ID
     is_sub = await db.is_user_subscribed(message.from_user.id)
 
-    text = (
-        "👋 <b>Добро пожаловать!</b>\n\n"
-        "✨ Это бот мастера по маникюру.\n\n"
-        "📅 Записаться на приём\n"
-        "📋 Посмотреть или отменить запись\n\n"
-        "Выберите действие в меню ниже 👇"
-    )
+    text = config.START_TEXT
+    if config.ADDRESS_TEXT:
+        text += f"\n\n📍 <b>Адрес</b>\n{config.ADDRESS_TEXT}"
+    if config.CONTACTS_TEXT:
+        text += f"\n\n📞 <b>Контакты</b>\n{config.CONTACTS_TEXT}"
+    if config.CANCEL_POLICY_TEXT:
+        text += f"\n\nℹ️ <b>Правила отмены</b>\n{config.CANCEL_POLICY_TEXT}"
     if not is_sub:
         text += (
             "\n\n⚠️ <b>Важно:</b> для записи нужно подписаться на канал."
@@ -421,6 +421,12 @@ async def confirm_booking_callback(
         f"👤 {name} · 📱 {phone}\n\n"
         "Отменить запись можно в разделе «Моя запись» 📋"
     )
+    if config.ADDRESS_TEXT:
+        text_user += f"\n\n📍 <b>Адрес</b>\n{config.ADDRESS_TEXT}"
+    if config.CONTACTS_TEXT:
+        text_user += f"\n\n📞 <b>Контакты</b>\n{config.CONTACTS_TEXT}"
+    if config.CANCEL_POLICY_TEXT:
+        text_user += f"\n\nℹ️ <b>Правила отмены</b>\n{config.CANCEL_POLICY_TEXT}"
     await callback.message.edit_text(text_user, parse_mode="HTML")
 
     # Уведомление админу

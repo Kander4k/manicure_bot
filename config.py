@@ -24,6 +24,12 @@ class Config:
     CLIENT_NAME: str = "Manicure Master"
     PRICES_TEXT: str = ""
     PORTFOLIO_URL: str = ""
+    START_TEXT: str = ""
+    CONTACTS_TEXT: str = ""
+    ADDRESS_TEXT: str = ""
+    CANCEL_POLICY_TEXT: str = ""
+    REMINDER_HOURS: int = 24
+    REMINDER_TEXT: str = ""
 
 
 def load_config() -> Config:
@@ -75,6 +81,32 @@ def load_config() -> Config:
         "https://ru.pinterest.com/crystalwithluv/_created/",
     )
 
+    start_text = os.getenv(
+        "START_TEXT",
+        "👋 <b>Добро пожаловать!</b>\n\n"
+        "✨ Это бот мастера по маникюру.\n\n"
+        "📅 Записаться на приём\n"
+        "📋 Посмотреть или отменить запись\n\n"
+        "Выберите действие в меню ниже 👇",
+    )
+    contacts_text = os.getenv("CONTACTS_TEXT", "").strip()
+    address_text = os.getenv("ADDRESS_TEXT", "").strip()
+    cancel_policy_text = os.getenv("CANCEL_POLICY_TEXT", "").strip()
+
+    reminder_hours_raw = os.getenv("REMINDER_HOURS", "24").strip()
+    try:
+        reminder_hours = int(reminder_hours_raw)
+    except ValueError:
+        reminder_hours = 24
+    if reminder_hours < 0:
+        reminder_hours = 0
+
+    reminder_text = os.getenv(
+        "REMINDER_TEXT",
+        "Напоминаем, что вы записаны на маникюр завтра в <b>{time}</b>.\n"
+        "Ждём вас ❤️",
+    )
+
     return Config(
         BOT_TOKEN=token,
         ADMIN_ID=admin_id,
@@ -85,4 +117,10 @@ def load_config() -> Config:
         CLIENT_NAME=client_name,
         PRICES_TEXT=prices_text,
         PORTFOLIO_URL=portfolio_url,
+        START_TEXT=start_text,
+        CONTACTS_TEXT=contacts_text,
+        ADDRESS_TEXT=address_text,
+        CANCEL_POLICY_TEXT=cancel_policy_text,
+        REMINDER_HOURS=reminder_hours,
+        REMINDER_TEXT=reminder_text,
     )

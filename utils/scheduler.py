@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import Bot
 
 from database.db import Database
+from config import Config
 
 
 class ReminderScheduler:
@@ -11,9 +12,10 @@ class ReminderScheduler:
     Обёртка вокруг APScheduler для планирования напоминаний.
     """
 
-    def __init__(self, bot: Bot, db: Database):
+    def __init__(self, bot: Bot, db: Database, config: Config):
         self.bot = bot
         self.db = db
+        self.config = config
         self.scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
     async def start(self):
@@ -30,7 +32,7 @@ class ReminderScheduler:
             dt_visit = datetime.strptime(
                 f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
             )
-            reminder_time = dt_visit - timedelta(hours=24)
+            reminder_time = dt_visit - timedelta(hours=self.config.REMINDER_HOURS)
             if reminder_time <= now:
                 # нет смысла восстанавливать просроченное напоминание
                 continue
@@ -69,7 +71,7 @@ class ReminderScheduler:
         dt_visit = datetime.strptime(
             f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
         )
-        reminder_time = dt_visit - timedelta(hours=24)
+        reminder_time = dt_visit - timedelta(hours=self.config.REMINDER_HOURS)
         now = datetime.now()
         if reminder_time <= now:
             # Не создаём напоминание
@@ -110,11 +112,18 @@ class ReminderScheduler:
         """
         Фактическая отправка напоминания в Telegram.
         """
-        text = (
-            "Напоминаем, что вы записаны на маникюр "
-            f"завтра в <b>{time_str}</b>.\n"
-            "Ждём вас ❤️"
-        )
+        try:
+            text = self.config.REMINDER_TEXT.format(
+                time=time_str,
+                date=date_str,
+                client_name=self.config.CLIENT_NAME,
+            )
+        except Exception:
+            text = (
+                "Напоминаем, что вы записаны на маникюр завтра "
+                f"в <b>{time_str}</b>.\n"
+                "Ждём вас ❤️"
+            )
         try:
             await self.bot.send_message(
                 chat_id=user_id,

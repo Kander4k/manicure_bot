@@ -43,7 +43,7 @@ async def main():
     dp = Dispatcher(storage=storage)
 
     # Планировщик напоминаний
-    scheduler = ReminderScheduler(bot=bot, db=db)
+    scheduler = ReminderScheduler(bot=bot, db=db, config=config)
     await scheduler.start()
 
     # Middleware: без него хендлеры не получают db/config/scheduler/bot и не срабатывают
